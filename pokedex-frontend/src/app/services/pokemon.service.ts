@@ -5,7 +5,7 @@ import { Observable, map, of, finalize, tap, switchMap, shareReplay } from 'rxjs
 import { Pokemon } from '../models/pokemon.model';
 import { PokemonFilters } from '../models/pokemon-filters.model';
 import { SelectOption } from '../models/pokemon-filter-selected-option.model';
-import { environment } from '../../environments/environment.dev';
+import { environment } from '../../environments/environment';
 import { PokemonPageResponse } from '../models/pokemon-api-list-response.model';
 
 @Injectable({ providedIn: 'root' })

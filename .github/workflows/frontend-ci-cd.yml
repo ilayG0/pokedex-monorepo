@@ -28,7 +28,7 @@ jobs:
         run: npm ci
 
       - name: Build Angular app with Nx
-        run: npx nx build pokedex-frontend 
+        run: npx nx build pokedex-frontend --configuration=production
 
       - name: Setup SSH
         run: |

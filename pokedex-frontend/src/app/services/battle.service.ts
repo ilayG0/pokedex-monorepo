@@ -3,7 +3,7 @@ import { io, Socket } from 'socket.io-client';
 import { Observable } from 'rxjs';
 import { AuthService } from './auth.service'; 
 
-import { environment } from '../../environments/environment.dev';
+import { environment } from '../../environments/environment';
 
 export type BattleState = any;
 export type BattleEvent = any;
