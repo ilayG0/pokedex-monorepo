@@ -11,8 +11,9 @@ on:
       - "tsconfig.base.json"
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
+    environment: prod
 
     steps:
       - name: Checkout repository
