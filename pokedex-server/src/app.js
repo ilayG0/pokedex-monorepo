@@ -12,7 +12,7 @@ function createApp() {
   app.use(express.json());
 
   app.get("/health", (req, res) => {
-    res.json({ status: "ok" ,version: "9"});
+    res.json({ status: "ok" ,version: "10"});
   });
 
   app.use("/api/auth", authRoutes);
