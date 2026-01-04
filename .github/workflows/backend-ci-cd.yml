@@ -1,50 +1,60 @@
-name: Backend CI/CD (pokedex-server, PM2, self-hosted)
+name: Deploy Backend (self-hosted)
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
     paths:
       - "pokedex-server/**"
-      - "package.json"
-      - "package-lock.json"
+      - ".github/workflows/deploy-backend.yml"
+
+concurrency:
+  group: backend-prod
+  cancel-in-progress: true
 
 jobs:
   deploy-backend:
     runs-on: self-hosted
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Use Node.js 20
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "npm"
-          cache-dependency-path: |
-            package-lock.json
-            pokedex-server/package-lock.json
-
-      - name: Install backend dependencies
-        working-directory: pokedex-server
-        run: npm ci
-
-      - name: Restart backend with PM2
-        working-directory: pokedex-server
+      - name: Show runner info
         run: |
-          pm2 startOrReload ecosystem.config.js
+          echo "Running on self-hosted EC2 backend runner"
+          whoami
+          pwd
+          hostname
+
+      - name: Sync repo on EC2
+        run: |
+          cd /home/ubuntu/pokedex-server
+          git fetch origin
+          git reset --hard origin/main
+
+      - name: Install production dependencies
+        run: |
+          cd /home/ubuntu/pokedex-server
+          npm ci --omit=dev
+
+      # אם יש לך build:
+      # - name: Build
+      #   run: |
+      #     cd /home/ubuntu/pokedex-server
+      #     npm run build
+
+      - name: Reload with PM2
+        run: |
+          cd /home/ubuntu/pokedex-server
+          pm2 startOrReload ecosystem.config.js --update-env
           pm2 save
-          pm2 status
 
       - name: Health check with retries
         run: |
-          for i in {1..10}; do
+          for i in {1..15}; do
             echo "Health check attempt $i..."
-            if curl -f http://127.0.0.1/health > /dev/null 2>&1; then
-              echo "Health check OK"
-              exit 0
-            fi
-            sleep 3
+            RESP="$(curl -s http://127.0.0.1:3000/health || true)"
+            echo "health response: $RESP"
+
+            echo "$RESP" | grep -q '"version":"11"' && echo "Health OK (v11)" && exit 0
+            sleep 2
           done
           echo "Health check failed after retries"
           exit 1
