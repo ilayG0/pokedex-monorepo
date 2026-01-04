@@ -1,0 +1,64 @@
+name: Frontend CI/CD (Nx monorepo, GitHub-hosted)
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - "pokedex-frontend/**"
+      - "nx.json"
+      - "package.json"
+      - "package-lock.json"
+      - "tsconfig.base.json"
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies (root)
+        run: npm ci
+
+      - name: Build Angular app with Nx
+        run: npx nx build pokedex-frontend --configuration=production
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "$EC2_SSH_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          printf "Host *\n  StrictHostKeyChecking no\n" > ~/.ssh/config
+        env:
+          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+
+      - name: Install rsync
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y rsync
+
+      - name: Deploy build to EC2
+        run: |
+          rsync -avz --delete \
+            dist/pokedex-frontend/ \
+            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/var/www/pokedex-frontend/
+
+      - name: Health check
+        run: |
+          for i in {1..10}; do
+            echo "Health check attempt $i..."
+            if curl -f http://${{ secrets.EC2_HOST }}/index.html > /dev/null 2>&1; then
+              echo "Frontend is up "
+              exit 0
+            fi
+            sleep 3
+          done
+          echo "Frontend health check failed "
+          exit 1
