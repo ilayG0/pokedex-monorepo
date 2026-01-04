@@ -25,23 +25,23 @@ jobs:
 
       - name: Sync repo on EC2
         run: |
-          cd /home/ubuntu/pokedex-server
+          cd /home/ubuntu/pokedex-monorepo/pokedex-server
           git fetch origin
           git reset --hard origin/main
 
       - name: Install production dependencies
         run: |
-          cd /home/ubuntu/pokedex-server
+          cd /home/ubuntu/pokedex-monorepo/pokedex-server
           npm ci --omit=dev
 
       - name: Reload with PM2
         run: |
-          cd /home/ubuntu/pokedex-server
+          cd /home/ubuntu/pokedex-monorepo/pokedex-server
           pm2 startOrReload ecosystem.config.js --update-env
           pm2 save
       - name: Print deployed commit
         run: |
-          cd /home/ubuntu/pokedex-server
+          cd /home/ubuntu/pokedex-monorepo/pokedex-server
           echo "Deployed commit: $(git rev-parse --short HEAD)"
           git log -1 --oneline
 
