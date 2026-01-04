@@ -2,10 +2,9 @@ module.exports = {
   apps: [
     {
       name: "pokedex-server",
+      cwd: "/home/ubuntu/pokedex-monorepo/pokedex-server",
       script: "src/server.js",
-      cwd: "/home/ubuntu/pokedex-server",
-      instances: 1,
-      exec_mode: "fork",
+      env_file: "/home/ubuntu/.env.pokedex.prod",
       env: {
         NODE_ENV: "production",
         PORT: 3000
